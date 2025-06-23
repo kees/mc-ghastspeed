@@ -1,0 +1,21 @@
+name: ${mod_id}
+version: ${mod_version}
+main: ${mod_group_id}.${mod_class}
+api-version: ${mapping_version}
+
+commands:
+  ghastspeed:
+    description: Changes the Happy Ghast ridden flying speed
+    usage: /ghastspeed [global] <value>
+    permission: ghastspeed.use
+
+permissions:
+  ghastspeed.use:
+    description: Report the ridden Ghast speed
+    default: true
+  ghastspeed.set:
+    description: Allows changing ridden Ghast speed
+    default: true
+  ghastspeed.set.global:
+    description: Allows changing global Ghast speed
+    default: op

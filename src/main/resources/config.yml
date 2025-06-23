@@ -1,0 +1,2 @@
+# Happy Ghast Riding Speed (default FLYING_SPEED is 0.05 blocks per tick)
+global-speed: 0.25
