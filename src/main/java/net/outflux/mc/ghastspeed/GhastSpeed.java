@@ -198,7 +198,7 @@ public class GhastSpeed extends JavaPlugin implements Listener {
 
                 double speed = parseSaneSpeed(args[1]);
                 globalSpeed = speed;
-                sender.sendMessage("You set the global Ghast ridden flying speed to: " + globalSpeed);
+                sender.sendMessage("You set the global Ghast ridden flying speed to: " + blocksPerSecondString(globalSpeed));
                 success = true;
             }
             else if (args.length == 1 && !(args[0].equalsIgnoreCase("help"))) {
