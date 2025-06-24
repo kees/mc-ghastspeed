@@ -4,6 +4,7 @@ import java.lang.String;
 import java.util.UUID;
 import java.util.Map;
 import java.util.HashMap;
+import java.text.DecimalFormat;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
@@ -33,9 +34,10 @@ public class GhastSpeed extends JavaPlugin implements Listener {
     private String blocksPerSecondString(double blocksPerTick)
     {
         double blocksPerSec = blocksPerTick * 20.0;
+        DecimalFormat df = new DecimalFormat("#.####");
         return String.format("%f block%s/tick (%f block%s/second)",
-                             blocksPerTick, blocksPerTick == 1.0 ? "" : "s",
-                             blocksPerSec, blocksPerSec == 1.0 ? "" : "s");
+                             df.format(blocksPerTick), blocksPerTick == 1.0 ? "" : "s",
+                             df.format(blocksPerSec), blocksPerSec == 1.0 ? "" : "s");
     }
 
     private void discoverDefaults() {
