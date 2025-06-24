@@ -85,7 +85,10 @@ public class GhastSpeed extends JavaPlugin implements Listener {
 
     private String blocksPerSecondString(double blocksPerTick)
     {
-	    return blocksPerTick + " blocks/tick (" + (blocksPerTick * 20.0) + " blocks/second)";
+	    double blocksPerSec = blocksPerTick * 20.0;
+	    return String.format("%f block%s/tick (%f block%s/second)",
+			    blocksPerTick, blocksPerTick == 1.0 ? "" : "s",
+			    blocksPerSec, blocksPerSec == 1.0 ? "" : "s");
     }
 
     @Override
@@ -111,7 +114,7 @@ public class GhastSpeed extends JavaPlugin implements Listener {
         if (speedAttr == null) return;
 
 	double currentSpeed = speedAttr.getBaseValue();
-	double speed = speed = ghastSpeeds.getOrDefault(mount.getUniqueId(), globalSpeed);
+	double speed = ghastSpeeds.getOrDefault(mount.getUniqueId(), globalSpeed);
 	if (speed == currentSpeed) return;
 
         speedAttr.setBaseValue(speed);
