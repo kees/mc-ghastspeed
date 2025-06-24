@@ -33,17 +33,14 @@ public class GhastSpeed extends JavaPlugin implements Listener {
     private void discoverDefaults() {
         // Figure out what the default flying speed of a Happy Ghast is
         World nether = Bukkit.getWorld("world_nether"); // Pick a safe world
-        if (nether == null) {
-            return;
-        }
+        if (nether == null) return;
+
         Location unoccupied = new Location(nether, 0, 200, 0); // Best effort safe location
-        if (unoccupied == null) {
-            return;
-        }
+        if (unoccupied == null) return;
+
         LivingEntity entity = (LivingEntity) nether.spawnEntity(unoccupied, EntityType.HAPPY_GHAST);
-        if (entity == null) {
-            return;
-        }
+        if (entity == null) return;
+
         originalSpeed = entity.getAttribute(Attribute.FLYING_SPEED).getBaseValue();
         entity.remove();
         getLogger().info("Happy Ghast default flying speed: " + originalSpeed);
@@ -109,11 +106,17 @@ public class GhastSpeed extends JavaPlugin implements Listener {
 
     private void setMountSpeed(Entity rider, LivingEntity mount)
     {
+        // Ignore non-Ghasts
+        if (!(mount instanceof HappyGhast)) return;
+
+        // Ignore impossible lack of FLYING_SPEED attribute
         AttributeInstance speedAttr = mount.getAttribute(Attribute.FLYING_SPEED);
         if (speedAttr == null) return;
 
         double currentSpeed = speedAttr.getBaseValue();
         double speed = ghastSpeeds.getOrDefault(mount.getUniqueId(), globalSpeed);
+
+        // Ignore unchanged speeds.
         if (speed == currentSpeed) return;
 
         speedAttr.setBaseValue(speed);
@@ -132,20 +135,21 @@ public class GhastSpeed extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onDismount(EntityDismountEvent event) {
-        if (!(event.getDismounted() instanceof LivingEntity)) return;
-        Entity entity = event.getEntity();
+        if (!(event.getDismounted() instanceof HappyGhast)) return;
 
         LivingEntity mount = (LivingEntity) event.getDismounted();
+        Entity rider = event.getEntity();
+
         AttributeInstance speedAttr = mount.getAttribute(Attribute.FLYING_SPEED);
-        if (speedAttr != null) {
-            // Reset to default speed based on mob type
-            if (mount instanceof HappyGhast) {
-                speedAttr.setBaseValue(originalSpeed); // Restore speed
-                getLogger().info(entity.getName() + " dismounted " + mount.getName() + "; flying speed restored to " + blocksPerSecondString(originalSpeed));
-            }
-        }
+        // Ignore impossible lack of FLYING_SPEED attribute
+        if (speedAttr == null) return;
+
+        // Reset to default speed
+        speedAttr.setBaseValue(originalSpeed);
+        getLogger().info(rider.getName() + " dismounted " + mount.getName() + "; flying speed restored to " + blocksPerSecondString(originalSpeed));
     }
 
+    // Negative speeds are nonsense, and speeds above 1.0 are almost certain to break clients.
     private double parseSaneSpeed(String valueString) {
         double speed = Double.parseDouble(valueString);
         if (speed < 0.0 || speed > 1.0) {
@@ -158,9 +162,10 @@ public class GhastSpeed extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(command.getName().equalsIgnoreCase("ghastspeed"))) return false;
 
+        // Report current speeds
         if (args.length == 0) {
-            sender.sendMessage("Global Happy Ghast flying speed: " + originalSpeed);
-            sender.sendMessage("Global Happy Ghast ridden flying speed: " + globalSpeed);
+            sender.sendMessage("Global Happy Ghast flying speed: " + blocksPerSecondString(originalSpeed));
+            sender.sendMessage("Global Happy Ghast ridden flying speed: " + blocksPerSecondString(globalSpeed));
 
             if (!(sender instanceof Player)) return true;
             Player player = (Player) sender;
@@ -170,41 +175,43 @@ public class GhastSpeed extends JavaPlugin implements Listener {
             LivingEntity mount = (LivingEntity) vehicle;
 
             AttributeInstance speedAttr = mount.getAttribute(Attribute.FLYING_SPEED);
+            // Ignore impossible lack of FLYING_SPEED attribute
+            if (speedAttr == null) return true;
+
             double currentSpeed = speedAttr.getBaseValue();
-            player.sendMessage("Current Happy Ghast ridden flying speed: " + currentSpeed);
+            player.sendMessage("Current Happy Ghast ridden flying speed: " + blocksPerSecondString(currentSpeed));
 
             return true;
         }
 
         boolean success = false;
-
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "This command can only be run by a player.");
-            return true;
-        }
-        Player player = (Player) sender;
-
         try {
             if (args.length == 2 && args[0].equalsIgnoreCase("global")) {
                 // /ghastspeed global NN.NN
                 // Set the default flying speed of a newly mounted Happy Ghast
-                if (!player.hasPermission("ghastspeed.set.global")) {
-                    player.sendMessage(ChatColor.RED + "You don't have permission to set the global speed.");
+                if (!sender.hasPermission("ghastspeed.set.global")) {
+                    sender.sendMessage(ChatColor.RED + "You don't have permission to set the global speed.");
                     return true;
                 }
 
                 double speed = parseSaneSpeed(args[1]);
                 globalSpeed = speed;
-                player.sendMessage("You set the global Ghast ridden flying speed to: " + globalSpeed);
+                sender.sendMessage("You set the global Ghast ridden flying speed to: " + globalSpeed);
                 success = true;
             }
             else if (args.length == 1 && !(args[0].equalsIgnoreCase("help"))) {
                 // /ghastspeed NN.NN
                 // Set the flying speed of the currently mounted Happy Ghast
-                if (!player.hasPermission("ghastspeed.set")) {
-                    player.sendMessage(ChatColor.RED + "You don't have permission to set this Ghast's speed.");
+                if (!sender.hasPermission("ghastspeed.set")) {
+                    sender.sendMessage(ChatColor.RED + "You don't have permission to set this Ghast's speed.");
                     return true;
                 }
+
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(ChatColor.RED + "This command can only be run by a player.");
+                    return true;
+                }
+                Player player = (Player) sender;
 
                 Entity vehicle = player.getVehicle();
                 if (!(vehicle instanceof HappyGhast)) {
@@ -217,11 +224,11 @@ public class GhastSpeed extends JavaPlugin implements Listener {
                 ghastSpeeds.put(mount.getUniqueId(), speed);
                 setMountSpeed(player, mount);
 
-                player.sendMessage("You set this Ghast's ridden flying speed to: " + speed);
+                player.sendMessage("You set this Ghast's ridden flying speed to: " + blocksPerSecondString(speed));
                 success = true;
             }
         } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.RED + "Invalid speed: " + e.getMessage());
+            sender.sendMessage(ChatColor.RED + "Invalid speed: " + e.getMessage());
         }
 
         if (success) {
@@ -229,7 +236,7 @@ public class GhastSpeed extends JavaPlugin implements Listener {
             writeConfig();
         } else {
             // Something went wrong, so show usage.
-            player.sendMessage("Usage: /ghastspeed [[global] <value in blocks-per-tick>]");
+            sender.sendMessage("Usage: /ghastspeed [[global] <value in blocks-per-tick>]");
         }
 
         return true;
