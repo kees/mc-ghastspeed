@@ -159,6 +159,24 @@ public class GhastSpeed extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(command.getName().equalsIgnoreCase("ghastspeed"))) return false;
 
+	if (args.length == 0) {
+		sender.sendMessage("Global Happy Ghast flying speed: " + originalSpeed);
+		sender.sendMessage("Global Happy Ghast ridden flying speed: " + globalSpeed);
+
+        	if (!(sender instanceof Player)) return true;
+		Player player = (Player) sender;
+
+	        Entity vehicle = player.getVehicle();
+	        if (!(vehicle instanceof HappyGhast)) return true;
+		LivingEntity mount = (LivingEntity) vehicle;
+
+                AttributeInstance speedAttr = mount.getAttribute(Attribute.FLYING_SPEED);
+            	double currentSpeed = speedAttr.getBaseValue();
+		player.sendMessage("Current Happy Ghast ridden flying speed: " + currentSpeed);
+
+		return true;
+	}
+
 	boolean success = false;
 
         if (!(sender instanceof Player)) {
@@ -169,16 +187,26 @@ public class GhastSpeed extends JavaPlugin implements Listener {
 
         try {
 	    if (args.length == 2 && args[0].equalsIgnoreCase("global")) {
+		// /ghastspeed global NN.NN
+		// Set the default flying speed of a newly mounted Happy Ghast
 		if (!player.hasPermission("ghastspeed.set.global")) {
 		    player.sendMessage(ChatColor.RED + "You don't have permission to set the global speed.");
 		    return true;
 		}
+
                 double speed = parseSaneSpeed(args[1]);
                 globalSpeed = speed;
                 player.sendMessage("You set the global Ghast ridden flying speed to: " + globalSpeed);
 		success = true;
             }
 	    else if (args.length == 1 && !(args[0].equalsIgnoreCase("help"))) {
+		// /ghastspeed NN.NN
+		// Set the flying speed of the currently mounted Happy Ghast
+		if (!player.hasPermission("ghastspeed.set")) {
+		    player.sendMessage(ChatColor.RED + "You don't have permission to set this Ghast's speed.");
+		    return true;
+		}
+
 	        Entity vehicle = player.getVehicle();
 	        if (!(vehicle instanceof HappyGhast)) {
 		    player.sendMessage("You must be riding a Happy Ghast to set its flying speed");
@@ -186,29 +214,12 @@ public class GhastSpeed extends JavaPlugin implements Listener {
 	        }
 		LivingEntity mount = (LivingEntity) vehicle;
 
-		if (!player.hasPermission("ghastspeed.set")) {
-		    player.sendMessage(ChatColor.RED + "You don't have permission to set this Ghast's speed.");
-		    return true;
-		}
                 double speed = parseSaneSpeed(args[0]);
 	        ghastSpeeds.put(mount.getUniqueId(), speed);
 		setMountSpeed(player, mount);
 
                 player.sendMessage("You set this Ghast's ridden flying speed to: " + speed);
 		success = true;
-            }
-	    else if (args.length == 0) {
-		player.sendMessage("Global Happy Ghast flying speed: " + originalSpeed);
-		player.sendMessage("Global Happy Ghast ridden flying speed: " + globalSpeed);
-	        Entity vehicle = player.getVehicle();
-	        if (vehicle instanceof HappyGhast) {
-		    LivingEntity mount = (LivingEntity) vehicle;
-                    AttributeInstance speedAttr = mount.getAttribute(Attribute.FLYING_SPEED);
-            	    double currentSpeed = speedAttr.getBaseValue();
-		    player.sendMessage("Current Happy Ghast ridden flying speed: " + currentSpeed);
-		}
-		// We're not saving the config, so bail out now.
-		return true;
             }
 	} catch (NumberFormatException e) {
             player.sendMessage(ChatColor.RED + "Invalid speed: " + e.getMessage());
@@ -218,9 +229,12 @@ public class GhastSpeed extends JavaPlugin implements Listener {
 	    // Either the global or specific ghast speed changed: save results.
 	    writeConfig();
 	} else {
+	    // Something went wrong, so show usage.
             player.sendMessage("Usage: /ghastspeed [[global] <value in blocks-per-tick>]");
 	}
 
         return true;
     }
 }
+
+// vim: set expandtab shiftwidth=4 softtabstop=4 :
