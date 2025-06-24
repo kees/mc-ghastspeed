@@ -30,6 +30,14 @@ public class GhastSpeed extends JavaPlugin implements Listener {
     private double globalSpeed;
     private final Map<UUID, Double> ghastSpeeds = new HashMap<>();
 
+    private String blocksPerSecondString(double blocksPerTick)
+    {
+        double blocksPerSec = blocksPerTick * 20.0;
+        return String.format("%f block%s/tick (%f block%s/second)",
+                             blocksPerTick, blocksPerTick == 1.0 ? "" : "s",
+                             blocksPerSec, blocksPerSec == 1.0 ? "" : "s");
+    }
+
     private void discoverDefaults() {
         // Figure out what the default flying speed of a Happy Ghast is
         World nether = Bukkit.getWorld("world_nether"); // Pick a safe world
@@ -43,7 +51,7 @@ public class GhastSpeed extends JavaPlugin implements Listener {
 
         originalSpeed = entity.getAttribute(Attribute.FLYING_SPEED).getBaseValue();
         entity.remove();
-        getLogger().info("Happy Ghast default flying speed: " + originalSpeed);
+        getLogger().info("Happy Ghast default flying speed: " + blocksPerSecondString(originalSpeed));
     }
 
     private void readConfig() {
@@ -52,7 +60,7 @@ public class GhastSpeed extends JavaPlugin implements Listener {
 
         // Access config values
         globalSpeed = getConfig().getDouble("global-speed");
-        getLogger().info("Happy Ghast global ridden flying speed: " + globalSpeed);
+        getLogger().info("Happy Ghast global ridden flying speed: " + blocksPerSecondString(globalSpeed));
 
         // Deserialize from strings to UUID/doubles
         ghastSpeeds.clear();
@@ -78,14 +86,6 @@ public class GhastSpeed extends JavaPlugin implements Listener {
         getConfig().set("ghast-speeds", saveMap);
         getConfig().set("global-speed", globalSpeed);
         saveConfig();
-    }
-
-    private String blocksPerSecondString(double blocksPerTick)
-    {
-        double blocksPerSec = blocksPerTick * 20.0;
-        return String.format("%f block%s/tick (%f block%s/second)",
-                             blocksPerTick, blocksPerTick == 1.0 ? "" : "s",
-                             blocksPerSec, blocksPerSec == 1.0 ? "" : "s");
     }
 
     @Override
