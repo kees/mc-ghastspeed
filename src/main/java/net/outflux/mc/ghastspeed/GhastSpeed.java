@@ -35,7 +35,7 @@ public class GhastSpeed extends JavaPlugin implements Listener {
     {
         double blocksPerSec = blocksPerTick * 20.0;
         DecimalFormat df = new DecimalFormat("#.####");
-        return String.format("%f block%s/tick (%f block%s/second)",
+        return String.format("%s block%s/tick (%s block%s/second)",
                              df.format(blocksPerTick), blocksPerTick == 1.0 ? "" : "s",
                              df.format(blocksPerSec), blocksPerSec == 1.0 ? "" : "s");
     }
